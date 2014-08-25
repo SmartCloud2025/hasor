@@ -17,6 +17,7 @@ package net.hasor.core.context.factorys.hasor;
 import net.hasor.core.RegisterInfo;
 import net.hasor.core.context.factorys.AbstractRegisterFactory;
 import net.hasor.core.context.factorys.AbstractRegisterInfoAdapter;
+import org.more.classcode.ClassEngine;
 /**
  * 
  * @version : 2014年7月4日
@@ -24,13 +25,26 @@ import net.hasor.core.context.factorys.AbstractRegisterInfoAdapter;
  */
 public class HasorRegisterFactory extends AbstractRegisterFactory {
     @Override
-    protected <T> AbstractRegisterInfoAdapter<T> createRegisterInfoAdapter(final Class<T> bindType) {
-        // TODO Auto-generated method stub
-        return null;
+    public <T> T getDefaultInstance(Class<T> oriType) {
+        return super.getDefaultInstance(oriType);
+    }
+    protected <T> AbstractRegisterInfoAdapter<T> createRegisterInfoAdapter(Class<T> bindingType) {
+        return new HasorRegisterInfoAdapter<T>(bindingType);
     }
     @Override
     protected <T> T newInstance(final RegisterInfo<T> oriType) {
-        // TODO Auto-generated method stub
-        return null;
+        if (oriType instanceof HasorRegisterInfoAdapter == false) {
+            return this.getDefaultInstance(oriType.getBindType());
+        }
+        //
+        HasorRegisterInfoAdapter<T> infoAdapter = (HasorRegisterInfoAdapter<T>) oriType;
+        ClassEngine engine = infoAdapter.buildEngine();
+        try {
+            Class<?> newType = engine.builderClass().toClass();
+            Object targetBean = newType.newInstance();
+            return (T) engine.configBean(targetBean);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

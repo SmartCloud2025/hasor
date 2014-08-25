@@ -22,44 +22,39 @@ import java.util.Set;
  * @author 赵永春 (zyc@hasor.net)
  */
 public interface AppContext extends EventContext {
-    /**获取上下文*/
+    /**获取 {@link net.hasor.core.Environment#getContext()} 环境接口中所表示的上下文。
+     * @see net.hasor.core.Environment*/
     public Object getContext();
-    /**获取父层级*/
-    public AppContext getParent();
-    /**获取应用程序配置。*/
+    /**获取应用程序配置。
+     * <li>该方法可以在任何时候被使用，不需要考虑容器状态 {@link AppContext#isStart()} </li>
+     * <li>该方法相当于 {@link Environment#getSettings()}</li>
+     * @see net.hasor.core.Environment*/
     public Settings getSettings();
     /**获取环境接口。*/
     public Environment getEnvironment();
     /**在框架扫描包的范围内查找具有特征类集合。（特征可以是继承的类、标记的注解）*/
     public Set<Class<?>> findClass(Class<?> featureType);
     /**模块启动*/
-    public void start() throws Throwable;
+    public void start(Module... modules) throws Throwable;
     /**是否启动*/
     public boolean isStart();
     //
-    /*-------------------------------------------------------------------------------------Module*/
-    /**添加模块，如果容器已经初始化那么会引发{@link IllegalStateException}异常。*/
-    public Module addModule(Module hasorModule);
-    /**删除模块，如果容器已经初始化那么会引发{@link IllegalStateException}异常。*/
-    public boolean removeModule(Module hasorModule);
-    /**获得所有模块*/
-    public Module[] getModules();
-    //
     /*---------------------------------------------------------------------------------------Bean*/
-    /**通过名获取Bean的类型。*/
-    public Class<?> getBeanType(String name);
+    //    /**通过名获取Bean的类型。*/
+    //    public Class<?> getBeanType(String name);
+    //    /**获取已经注册的Bean名称。*/
+    //    public String[] getBeanNames();
+    //    /**创建Bean。*/
+    //    public <T> T getBean(String name);
+    //
     /**如果存在目标类型的Bean则返回Bean的名称。*/
-    public String[] getBeanNames(Class<?> targetClass);
-    /**获取已经注册的Bean名称。*/
-    public String[] getBeanNames();
-    /**创建Bean。*/
-    public <T> T getBean(String name);
+    public String[] getNames(Class<?> targetClass);
     /**创建Bean。*/
     public <T> T getInstance(Class<T> targetClass);
     /**创建Bean。*/
-    public <T> T getInstance(RegisterInfo<T> typeRegister);
+    public <T> T getInstance(BindInfo<T> info);
     /**创建Bean。*/
-    public <T> Provider<T> getProvider(RegisterInfo<T> typeRegister);
+    public <T> Provider<T> getProvider(BindInfo<T> info);
     //
     /*-------------------------------------------------------------------------------------Binder*/
     /**通过一个类型获取所有绑定到该类型的上的对象实例。*/
@@ -71,7 +66,7 @@ public interface AppContext extends EventContext {
     /**通过一个类型获取所有绑定到该类型的上的对象实例。*/
     public <T> Provider<T> findBindingProvider(String withName, Class<T> bindType);
     /**通过一个类型获取所有绑定到该类型的上的对象实例。*/
-    public <T> List<RegisterInfo<T>> findBindingRegister(Class<T> bindType);
+    public <T> List<BindInfo<T>> findBindingRegister(Class<T> bindType);
     /**通过一个类型获取所有绑定到该类型的上的对象实例。*/
-    public <T> RegisterInfo<T> findBindingRegister(String withName, Class<T> bindType);
+    public <T> BindInfo<T> findBindingRegister(String withName, Class<T> bindType);
 }

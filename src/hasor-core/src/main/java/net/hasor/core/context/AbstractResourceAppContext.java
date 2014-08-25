@@ -20,13 +20,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import net.hasor.core.AppContext;
+import net.hasor.core.BindInfoFactory;
+import net.hasor.core.BindInfoFactoryCreater;
 import net.hasor.core.Environment;
 import net.hasor.core.Hasor;
 import net.hasor.core.Module;
 import net.hasor.core.XmlNode;
-import net.hasor.core.context.adapter.RegisterFactory;
-import net.hasor.core.context.adapter.RegisterFactoryCreater;
-import net.hasor.core.context.factorys.DefaultRegisterFactoryCreater;
+import net.hasor.core.context.factorys.DefaultBindInfoFactoryCreater;
 import net.hasor.core.environment.StandardEnvironment;
 import org.more.util.ClassUtils;
 import org.more.util.ResourcesUtils;
@@ -37,9 +37,11 @@ import com.google.inject.Provider;
  * @version : 2013-4-9
  * @author 赵永春 (zyc@hasor.net)
  */
-public abstract class AbstractResourceAppContext extends AbstractStateAppContext {
+public abstract class AbstractResourceAppContext extends AbstractAppContext {
     public static final String DefaultSettings = "hasor-config.xml";
     private URI                mainSettings    = null;
+    private AbstractAppContext parent;
+    private Environment        environment;
     //
     /**设置主配置文件*/
     protected AbstractResourceAppContext() throws IOException, URISyntaxException {
@@ -66,15 +68,21 @@ public abstract class AbstractResourceAppContext extends AbstractStateAppContext
     public final URI getMainSettings() {
         return this.mainSettings;
     }
-    //
-    @Override
+    public AbstractAppContext getParent() {
+        return this.parent;
+    }
+    /**获取环境接口。*/
+    public Environment getEnvironment() {
+        if (this.environment == null) {
+            this.environment = this.createEnvironment();
+        }
+        return this.environment;
+    }
+    /**创建环境对象*/
     protected Environment createEnvironment() {
         return new StandardEnvironment(this.mainSettings);
     }
     //
-    //
-    //
-    @Override
     protected void doInitialize() {
         //1.预先加载Module
         Environment env = this.getEnvironment();
@@ -90,9 +98,9 @@ public abstract class AbstractResourceAppContext extends AbstractStateAppContext
                     try {
                         ClassLoader loader = Thread.currentThread().getContextClassLoader();
                         Class<?> moduleType = ClassUtils.getClass(loader, moduleTypeString);
-                        Module mod = (Module) moduleType.newInstance();
-                        this.addModule(mod);
-                    } catch (Exception e) {
+                        Module module = (Module) moduleType.newInstance();
+                        this.installModule(module);
+                    } catch (Throwable e) {
                         Hasor.logError("loadModule Error: %s.", e.getMessage());
                     }
                 }
@@ -103,75 +111,71 @@ public abstract class AbstractResourceAppContext extends AbstractStateAppContext
     }
     //
     //
-    //
-    private Provider<RegisterFactory> registerFactoryProvider = null;
+    private Provider<BindInfoFactory> factoryProvider = null;
     /**设置一个RegisterFactory实例对象*/
-    protected void setRegisterFactory(final Provider<RegisterFactory> registerFactoryProvider) {
+    protected void setBindInfoFactory(final Provider<BindInfoFactory> factoryProvider) {
         if (this.isStart() == true) {
             throw new IllegalStateException("context is started.");
         }
-        this.registerFactoryProvider = registerFactoryProvider;
+        this.factoryProvider = factoryProvider;
     }
     /**设置一个RegisterFactory实例对象*/
-    protected void setRegisterFactory(final RegisterFactory registerFactory) {
+    protected void setBindInfoFactory(final BindInfoFactory bindInfoFactory) {
         if (this.isStart() == true) {
             throw new IllegalStateException("context is started.");
         }
         //
-        if (registerFactory == null) {
-            this.registerFactoryProvider = null;
+        if (bindInfoFactory == null) {
+            this.factoryProvider = null;
         } else {
-            this.registerFactoryProvider = new AbstractRegisterFactoryProvider() {
-                @Override
-                protected RegisterFactory getRegisterFactory() {
-                    return registerFactory;
-                }
-            };
+            this.factoryProvider = new FactoryProvider(bindInfoFactory);
         }
     }
     /**设置一个RegisterFactoryCreater实例对象*/
-    protected void setRegisterFactoryCreater(final RegisterFactoryCreater registerFactoryCreate) {
+    protected void setRegisterFactoryCreater(final BindInfoFactoryCreater registerFactoryCreate) {
         if (this.isStart() == true) {
             throw new IllegalStateException("context is started.");
         }
         //
         if (registerFactoryCreate == null) {
-            this.registerFactoryProvider = null;
+            this.factoryProvider = null;
         } else {
-            this.registerFactoryProvider = new AbstractRegisterFactoryProvider() {
-                @Override
-                protected RegisterFactory getRegisterFactory() {
-                    return registerFactoryCreate.create(AbstractResourceAppContext.this.getEnvironment());
+            this.factoryProvider = new FactoryProvider(null) {
+                protected BindInfoFactory getBindInfoFactory() {
+                    return registerFactoryCreate.create(getEnvironment());
                 }
             };
         }
     }
-    @Override
-    protected RegisterFactory getRegisterFactory() {
+    protected BindInfoFactory getBindInfoFactory() {
         //
-        if (this.registerFactoryProvider == null) {
-            this.registerFactoryProvider = new AbstractRegisterFactoryProvider() {
-                @Override
-                protected RegisterFactory getRegisterFactory() {
-                    return new DefaultRegisterFactoryCreater().create(AbstractResourceAppContext.this.getEnvironment());
+        if (this.factoryProvider == null) {
+            this.factoryProvider = new FactoryProvider(null) {
+                protected BindInfoFactory getBindInfoFactory() {
+                    return new DefaultBindInfoFactoryCreater().create(getEnvironment());
                 }
             };
         }
-        RegisterFactory factory = this.registerFactoryProvider.get();
+        BindInfoFactory factory = this.factoryProvider.get();
         if (factory == null) {
             throw new NullPointerException("registerFactory is null.");
         }
         return factory;
     }
-    private static abstract class AbstractRegisterFactoryProvider implements Provider<RegisterFactory> {
-        private RegisterFactory registerFactory = null;
-        @Override
-        public RegisterFactory get() {
-            if (this.registerFactory == null) {
-                this.registerFactory = this.getRegisterFactory();
-            }
-            return this.registerFactory;
+}
+/***/
+class FactoryProvider implements Provider<BindInfoFactory> {
+    private BindInfoFactory bindInfoFactory = null;
+    public FactoryProvider(BindInfoFactory bindInfoFactory) {
+        this.bindInfoFactory = bindInfoFactory;
+    }
+    public BindInfoFactory get() {
+        if (this.bindInfoFactory == null) {
+            this.bindInfoFactory = this.getBindInfoFactory();
         }
-        protected abstract RegisterFactory getRegisterFactory();
+        return this.bindInfoFactory;
+    }
+    protected BindInfoFactory getBindInfoFactory() {
+        return null;
     }
 }

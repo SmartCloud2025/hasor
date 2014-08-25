@@ -23,6 +23,8 @@ import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import net.hasor.core.context.AbstractResourceAppContext;
+import net.hasor.core.context.StandardAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 /**
@@ -31,6 +33,52 @@ import org.slf4j.LoggerFactory;
  * @author 赵永春 (zyc@hasor.net)
  */
 public abstract class Hasor {
+    /**用简易的方式创建{@link AppContext}容器。*/
+    public static AppContext createAppContext() {
+        return Hasor.createAppContext(AbstractResourceAppContext.DefaultSettings, null, new Module[0]);
+    }
+    /**用简易的方式创建{@link AppContext}容器。*/
+    public static AppContext createAppContext(final BindInfoFactoryCreater factory) {
+        return Hasor.createAppContext(AbstractResourceAppContext.DefaultSettings, factory, new Module[0]);
+    }
+    /**用简易的方式创建{@link AppContext}容器。*/
+    public static AppContext createAppContext(final BindInfoFactoryCreater factory, final Module... modules) {
+        return Hasor.createAppContext(AbstractResourceAppContext.DefaultSettings, factory, modules);
+    }
+    //
+    /**用简易的方式创建{@link AppContext}容器。*/
+    public static AppContext createAppContext(final String config) {
+        return Hasor.createAppContext(config, null, new Module[0]);
+    }
+    /**用简易的方式创建{@link AppContext}容器。*/
+    public static AppContext createAppContext(final String config, final BindInfoFactoryCreater factory) {
+        return Hasor.createAppContext(config, factory, new Module[0]);
+    }
+    /**用简易的方式创建{@link AppContext}容器。*/
+    public static AppContext createAppContext(final String config, final BindInfoFactoryCreater factory, final Module... modules) {
+        try {
+            StandardAppContext app = new StandardAppContext(config, factory);
+            app.start(modules);
+            return app;
+        } catch (Throwable e) {
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            } else {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+    //
+    //
+    //
+    /**用简易的方式创建{@link AppContext}容器。*/
+    public static AppContext createAppContext(final String config, final Module... modules) {
+        return Hasor.createAppContext(config, null, modules);
+    }
+    /**用简易的方式创建{@link AppContext}容器。*/
+    public static AppContext createAppContext(final Module... modules) {
+        return Hasor.createAppContext(AbstractResourceAppContext.DefaultSettings, null, modules);
+    }
     //
     /*----------------------------------------------------------------------------------------Log*/
     private static StackTraceElement onTrace() {

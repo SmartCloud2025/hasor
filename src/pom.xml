@@ -79,6 +79,12 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>2.9.1</version>
+				<configuration>
+					<aggregate>true</aggregate> 
+					<excludePackageNames>
+						org.more.*
+					</excludePackageNames>
+				</configuration>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -158,7 +164,7 @@
 		<module>hasor-web</module>
 		<module>hasor-db</module>
 		<module>hasor-test</module>
-		<!-- module>hasor-mvc</module -->
+		<module>hasor-mvc</module>
 		<!-- module>hasor-security</module -->
 		<!-- module>hasor-quick</module -->
 	</modules>

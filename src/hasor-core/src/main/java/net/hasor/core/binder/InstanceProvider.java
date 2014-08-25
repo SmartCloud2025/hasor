@@ -25,7 +25,6 @@ public class InstanceProvider<T> implements Provider<T> {
     public InstanceProvider(final T instance) {
         this.instance = instance;
     }
-    @Override
     public T get() {
         return this.instance;
     }

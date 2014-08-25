@@ -14,37 +14,30 @@
  * limitations under the License.
  */
 package net.hasor.core.context.factorys.hasor;
-import net.hasor.core.Provider;
-import net.hasor.core.RegisterInfo;
-import net.hasor.core.context.factorys.AbstractRegisterInfoAdapter;
-import net.hasor.core.context.factorys.hasor.builder.BeanDefineBuilder;
-import net.hasor.core.context.factorys.hasor.schema.BeanDefine;
+import net.hasor.core.context.factorys.DefaultRegisterInfoAdapter;
+import org.more.classcode.ClassEngine;
 /**
  * 
  * @version : 2014年7月4日
  * @author 赵永春(zyc@hasor.net)
  */
-public class HasorRegisterInfoAdapter<T> extends AbstractRegisterInfoAdapter<T> {
-    @Override
-    public void setInitParam(final int index, final Class<?> paramType, final Provider<?> valueProvider) {
-        throw new UnsupportedOperationException();
+public class HasorRegisterInfoAdapter<T> extends DefaultRegisterInfoAdapter<T> {
+    //
+    public HasorRegisterInfoAdapter() {
+        super();
     }
-    @Override
-    public void setInitParam(final int index, final Class<?> paramType, final RegisterInfo<?> valueInfo) {
-        throw new UnsupportedOperationException();
+    public HasorRegisterInfoAdapter(Class<T> bindingType) {
+        super(bindingType);
     }
-    @Override
-    public void addInject(final String property, final Provider<?> valueProvider) {
-        throw new UnsupportedOperationException();
-    }
-    @Override
-    public void addInject(final String property, final RegisterInfo<?> valueInfo) {
-        throw new UnsupportedOperationException();
-    }
-    public BeanDefine builderDefine() {
-        BeanDefineBuilder builder = new BeanDefineBuilder();
-        //
-        //
-        return builder.builder();
+    //
+    private ClassEngine engine = null;
+    /**获取用于创建Bean的 Engine。*/
+    public ClassEngine buildEngine() {
+        if (this.engine == null) {
+            Class<?> superType = this.getSourceType();
+            superType = (superType == null) ? this.getBindType() : superType;
+            this.engine = new ClassEngine(superType);
+        }
+        return this.engine;
     }
 }
