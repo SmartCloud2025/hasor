@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import net.hasor.core.ApiBinder;
-import net.hasor.core.BindInfoFactory;
+import net.hasor.core.BindInfoDefineManager;
 import net.hasor.core.Module;
 import net.hasor.core.Provider;
 import net.hasor.core.context.StandardAppContext;
@@ -80,8 +80,8 @@ public class WebStandardAppContext extends StandardAppContext implements WebAppC
     protected AbstractWebApiBinder newApiBinder(final Module forModule) {
         return new AbstractWebApiBinder((WebEnvironment) this.getEnvironment()) {
             @Override
-            protected BindInfoFactory getBindTypeFactory() {
-                return WebStandardAppContext.this.getBindInfoFactory();
+            protected BindInfoDefineManager getBuilderRegister() {
+                return getBindInfoFactory().getManager();
             }
         };
     }
@@ -97,7 +97,7 @@ public class WebStandardAppContext extends StandardAppContext implements WebAppC
         apiBinder.bindType(FilterPipeline.class).toInstance(fPipline);
         apiBinder.bindType(ListenerPipeline.class).toInstance(lPipline);
         //
-        apiBinder.bindType(RRUpdate.class).toInstance(new RRUpdate());
+        apiBinder.bindType(RRUpdate.class).toInstance(new RRUpdate() {});
         //
         /*绑定ServletRequest对象的Provider*/
         apiBinder.bindType(ServletRequest.class).toProvider(new Provider<ServletRequest>() {

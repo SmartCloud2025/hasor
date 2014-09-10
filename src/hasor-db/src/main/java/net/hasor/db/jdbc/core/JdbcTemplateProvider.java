@@ -26,7 +26,6 @@ public class JdbcTemplateProvider implements Provider<JdbcTemplate> {
     public JdbcTemplateProvider(final DataSource dataSource) {
         this.dataSource = dataSource;
     }
-    @Override
     public JdbcTemplate get() {
         return new JdbcTemplate(this.dataSource);
     }

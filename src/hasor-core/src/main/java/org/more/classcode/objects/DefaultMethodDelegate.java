@@ -15,18 +15,16 @@
  */
 package org.more.classcode.objects;
 import java.lang.reflect.Method;
-import org.more.classcode.EngineToos;
-import org.more.classcode.InvokeException;
 import org.more.classcode.MethodDelegate;
+import org.more.util.BeanUtils;
 /**
  * 代理方法的空实现。
  * @version 2010-9-3
  * @author 赵永春 (zyc@hasor.net)
  */
 public class DefaultMethodDelegate implements MethodDelegate {
-    @Override
-    public Object invoke(final Method callMethod, final Object target, final Object[] params) throws InvokeException {
+    public Object invoke(final Method callMethod, final Object target, final Object[] params) {
         Class<?> returnType = callMethod.getReturnType();
-        return EngineToos.getDefaultValue(returnType);
+        return BeanUtils.getDefaultValue(returnType);
     }
 }

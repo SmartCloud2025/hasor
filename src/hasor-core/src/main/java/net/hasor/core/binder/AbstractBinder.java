@@ -22,7 +22,7 @@ import net.hasor.core.ApiBinder;
 import net.hasor.core.AppContextAware;
 import net.hasor.core.BindInfo;
 import net.hasor.core.BindInfoBuilder;
-import net.hasor.core.BindInfoFactory;
+import net.hasor.core.BindInfoDefineManager;
 import net.hasor.core.Environment;
 import net.hasor.core.EventCallBackHook;
 import net.hasor.core.EventListener;
@@ -33,6 +33,7 @@ import net.hasor.core.Scope;
 import net.hasor.core.Settings;
 import net.hasor.core.binder.aop.matcher.AopMatchers;
 import org.more.util.BeanUtils;
+import org.more.util.StringUtils;
 /**
  * 标准的 {@link ApiBinder} 接口实现，Hasor 在初始化模块时会为每个模块独立分配一个 ApiBinder 接口实例。
  * <p>抽象方法 {@link #configModule()} ,会返回一个接口( {@link net.hasor.core.ApiBinder.ModuleSettings ModuleSettings} )
@@ -54,8 +55,9 @@ public abstract class AbstractBinder implements ApiBinder {
     public Settings getSettings() {
         return this.getEnvironment().getSettings();
     }
-    public void registerAware(final AppContextAware aware) {
+    public <T extends AppContextAware> T autoAware(final T aware) {
         this.bindType(AppContextAware.class).uniqueName().toInstance(aware);
+        return aware;
     }
     public Set<Class<?>> findClass(final Class<?> featureType) {
         if (featureType == null) {
@@ -92,11 +94,11 @@ public abstract class AbstractBinder implements ApiBinder {
     //
     /*------------------------------------------------------------------------------------Binding*/
     /**注册一个类型*/
-    protected abstract BindInfoFactory getBindTypeFactory();
+    protected abstract BindInfoDefineManager getBuilderRegister();
     //
     public <T> NamedBindingBuilder<T> bindType(final Class<T> type) {
-        BindInfoBuilder<T> typeBuilder = this.getBindTypeFactory().createTypeBuilder(type);
-        //typeBuilder.setID(UUID.randomUUID().toString());/*设置唯一ID*/
+        BindInfoBuilder<T> typeBuilder = this.getBuilderRegister().createBuilder(type);
+        typeBuilder.setBindID(UUID.randomUUID().toString());/*设置唯一ID*/
         return new BindingBuilderImpl<T>(typeBuilder);
     }
     public <T> MetaDataBindingBuilder<T> bindType(final Class<T> type, final T instance) {
@@ -128,7 +130,7 @@ public abstract class AbstractBinder implements ApiBinder {
         this.bindInterceptor(matcherClass, matcherMethod, interceptor);
     }
     public void bindInterceptor(final Matcher<Class<?>> matcherClass, final Matcher<Method> matcherMethod, final MethodInterceptor interceptor) {
-        this.getBindTypeFactory().registerAop(matcherClass, matcherMethod, interceptor);
+        this.getBuilderRegister().addAop(matcherClass, matcherMethod, interceptor);
     }
     //
     /*------------------------------------------------------------------------------------Binding*/
@@ -150,11 +152,13 @@ public abstract class AbstractBinder implements ApiBinder {
             this.typeBuilder.setSingleton(true);
             return this;
         }
-        //        public LinkedBindingBuilder<T> idWith(String newID) {
-        //            if (StringUtils.isBlank(newID)) {}
-        //            this.typeBuilder.setBindName(newID);
-        //            return this;
-        //        }
+        public NamedBindingBuilder<T> idWith(String newID) {
+            if (StringUtils.isBlank(newID) == false) {
+                this.typeBuilder.setBindName(newID);
+                this.typeBuilder.setBindID(newID);
+            }
+            return this;
+        }
         public LinkedBindingBuilder<T> nameWith(final String name) {
             this.typeBuilder.setBindName(name);
             return this;

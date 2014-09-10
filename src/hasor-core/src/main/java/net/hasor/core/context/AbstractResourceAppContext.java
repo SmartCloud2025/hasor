@@ -20,18 +20,17 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import net.hasor.core.AppContext;
-import net.hasor.core.BindInfoFactory;
-import net.hasor.core.BindInfoFactoryCreater;
 import net.hasor.core.Environment;
 import net.hasor.core.Hasor;
 import net.hasor.core.Module;
+import net.hasor.core.Provider;
 import net.hasor.core.XmlNode;
-import net.hasor.core.context.factorys.DefaultBindInfoFactoryCreater;
 import net.hasor.core.environment.StandardEnvironment;
+import net.hasor.core.factorys.BindInfoFactory;
+import net.hasor.core.factorys.HasorRegisterFactory;
 import org.more.util.ClassUtils;
 import org.more.util.ResourcesUtils;
 import org.more.util.StringUtils;
-import com.google.inject.Provider;
 /**
  * {@link AppContext}接口默认实现。
  * @version : 2013-4-9
@@ -83,7 +82,7 @@ public abstract class AbstractResourceAppContext extends AbstractAppContext {
         return new StandardEnvironment(this.mainSettings);
     }
     //
-    protected void doInitialize() {
+    protected void doInitialize() throws Throwable {
         //1.预先加载Module
         Environment env = this.getEnvironment();
         boolean loadModule = env.getSettings().getBoolean("hasor.modules.loadModule");
@@ -95,14 +94,10 @@ public abstract class AbstractResourceAppContext extends AbstractAppContext {
                     if (StringUtils.isBlank(moduleTypeString)) {
                         continue;
                     }
-                    try {
-                        ClassLoader loader = Thread.currentThread().getContextClassLoader();
-                        Class<?> moduleType = ClassUtils.getClass(loader, moduleTypeString);
-                        Module module = (Module) moduleType.newInstance();
-                        this.installModule(module);
-                    } catch (Throwable e) {
-                        Hasor.logError("loadModule Error: %s.", e.getMessage());
-                    }
+                    ClassLoader loader = Thread.currentThread().getContextClassLoader();
+                    Class<?> moduleType = ClassUtils.getClass(loader, moduleTypeString);
+                    Module module = (Module) moduleType.newInstance();
+                    this.installModule(module);
                 }
             }
         }
@@ -131,28 +126,15 @@ public abstract class AbstractResourceAppContext extends AbstractAppContext {
             this.factoryProvider = new FactoryProvider(bindInfoFactory);
         }
     }
-    /**设置一个RegisterFactoryCreater实例对象*/
-    protected void setRegisterFactoryCreater(final BindInfoFactoryCreater registerFactoryCreate) {
-        if (this.isStart() == true) {
-            throw new IllegalStateException("context is started.");
-        }
-        //
-        if (registerFactoryCreate == null) {
-            this.factoryProvider = null;
-        } else {
-            this.factoryProvider = new FactoryProvider(null) {
-                protected BindInfoFactory getBindInfoFactory() {
-                    return registerFactoryCreate.create(getEnvironment());
-                }
-            };
-        }
-    }
     protected BindInfoFactory getBindInfoFactory() {
         //
         if (this.factoryProvider == null) {
+            final AppContext app = this;
             this.factoryProvider = new FactoryProvider(null) {
                 protected BindInfoFactory getBindInfoFactory() {
-                    return new DefaultBindInfoFactoryCreater().create(getEnvironment());
+                    HasorRegisterFactory factory = new HasorRegisterFactory();
+                    factory.setAppContext(app);
+                    return factory;
                 }
             };
         }

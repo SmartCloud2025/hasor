@@ -21,10 +21,9 @@ import java.util.List;
 import net.hasor.core.ApiBinder;
 import net.hasor.core.AppContext;
 import net.hasor.core.AppContextAware;
-import net.hasor.core.BindInfoFactoryCreater;
+import net.hasor.core.BindInfo;
 import net.hasor.core.Hasor;
 import net.hasor.core.Module;
-import net.hasor.core.BindInfo;
 import net.hasor.core.context.AbstractResourceAppContext;
 import net.hasor.test.junit.ContextConfiguration;
 import net.hasor.test.junit.DaemonThread;
@@ -40,20 +39,18 @@ import org.more.util.BeanUtils;
  * @author 赵永春(zyc@hasor.net)
  */
 public class HasorUnitRunner extends BlockJUnit4ClassRunner {
-    private AppContext      appContext   = null;
+    private AppContext  appContext   = null;
     private BindInfo<?> typeRegister = null;
     //
     public HasorUnitRunner(final Class<?> klass) throws InitializationError {
         super(klass);
         try {
             String configResource = AbstractResourceAppContext.DefaultSettings;
-            BindInfoFactoryCreater factoryCreater = null;
             //1.获取配置信息
             ContextConfiguration config = klass.getAnnotation(ContextConfiguration.class);
             List<Module> loadModule = new ArrayList<Module>();
             if (config != null) {
                 configResource = config.value();
-                factoryCreater = config.factoryCreater().newInstance();
                 for (Class<? extends Module> mod : config.loadModules())
                     loadModule.add(mod.newInstance());
             }
@@ -64,7 +61,7 @@ public class HasorUnitRunner extends BlockJUnit4ClassRunner {
                     HasorUnitRunner.this.typeRegister = apiBinder.bindType(klass).uniqueName().toInfo();
                 }
             });
-            this.appContext = Hasor.createAppContext(configResource, factoryCreater, loadModule.toArray(new Module[loadModule.size()]));
+            this.appContext = Hasor.createAppContext(configResource, loadModule.toArray(new Module[loadModule.size()]));
             //3.
             if (this.appContext == null)
                 throw new NullPointerException("HasorFactory.createAppContext return null.");
